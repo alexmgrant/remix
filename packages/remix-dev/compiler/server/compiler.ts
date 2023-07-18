@@ -95,8 +95,20 @@ const createEsbuildConfig = (
       "v8", // https://github.com/jspm/jspm-core/blob/main/nodelibs/browser/v8.js
     ];
 
+    // These modules were polyfilled as empty modules by the plugin we used
+    // prior to esbuild-plugins-node-modules-polyfill, so keep them as empty
+    // in the defaults in 1.19.0.  For v2 we'll stop doing any polyfilling by
+    // default and leave it entirely up to the user.
+    let empty = ["fs", "crypto", "dns", "dgram", "cluster", "repl", "tls"];
+
     let defaultPolyfillOptions: NodePolyfillsOptions = {
-      modules: builtinModules.filter((mod) => !unimplemented.includes(mod)),
+      modules: builtinModules.reduce(
+        (acc, mod) =>
+          Object.assign(acc, {
+            [mod]: empty.includes(mod) ? "empty" : !unimplemented.includes(mod),
+          }),
+        {}
+      ),
     };
 
     plugins.unshift(
